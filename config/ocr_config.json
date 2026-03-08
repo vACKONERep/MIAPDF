@@ -1,0 +1,127 @@
+{
+  "ocr": {
+    "engines": {
+      "tesseract": {
+        "enabled": true,
+        "language": "spa",
+        "oem": 3,
+        "psm": 6,
+        "config": "--oem 3 --psm 6 -l spa -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚáéíóúÑñ ",
+        "timeout": 30
+      },
+      "google_vision": {
+        "enabled": true,
+        "language_hints": ["es"],
+        "enable_handwriting": true,
+        "timeout": 30
+      },
+      "azure_vision": {
+        "enabled": true,
+        "language": "es",
+        "detect_orientation": true,
+        "timeout": 30
+      }
+    },
+    "ensemble": {
+      "enabled": true,
+      "min_confidence": 0.7,
+      "engines_to_use": ["google_vision", "azure_vision", "tesseract"],
+      "voting_strategy": "confidence_weighted"
+    }
+  },
+  "image_preprocessing": {
+    "pdf_conversion": {
+      "dpi": 300,
+      "image_format": "PNG"
+    },
+    "enhancement": {
+      "enhance_contrast": true,
+      "denoise": true,
+      "binarize": true,
+      "deskew": true,
+      "remove_lines": false,
+      "enhance_handwriting": true,
+      "crop_to_content": true
+    },
+    "resize": {
+      "target_height": 2000,
+      "maintain_aspect_ratio": true
+    }
+  },
+  "form_extraction": {
+    "field_patterns": {
+      "nombre": {
+        "keywords": ["nombre", "name", "apellido", "apellidos", "estudiante"],
+        "position": "below_keyword",
+        "validation": "spanish_name",
+        "required": true
+      },
+      "numero": {
+        "keywords": ["número", "numero", "telefono", "teléfono", "cedula", "cédula", "id", "identificación"],
+        "position": "right_of_keyword",
+        "validation": "number",
+        "required": true
+      },
+      "materia": {
+        "keywords": ["materia", "subject", "asunto", "tema", "curso", "asignatura"],
+        "position": "below_keyword",
+        "validation": "spanish_text",
+        "required": true
+      }
+    },
+    "validation": {
+      "min_name_length": 2,
+      "max_name_length": 50,
+      "min_confidence": 0.6,
+      "number_patterns": [
+        "\\d{7,12}",
+        "\\d{3}[-.\s]?\\d{3}[-.\s]?\\d{4}",
+        "\\d{1,4}[-.\s]?\\d{3}[-.\s]?\\d{3}"
+      ]
+    },
+    "text_processing": {
+      "normalize_unicode": true,
+      "remove_extra_spaces": true,
+      "capitalize_names": true,
+      "spell_check_names": true
+    }
+  },
+  "csv_export": {
+    "output": {
+      "encoding": "utf-8-sig",
+      "separator": ",",
+      "include_headers": true,
+      "include_metadata": true,
+      "date_format": "%Y-%m-%d %H:%M:%S"
+    },
+    "columns": {
+      "filename": "Archivo",
+      "nombre": "Nombre",
+      "numero": "Número",
+      "materia": "Materia",
+      "confidence": "Confianza",
+      "validation_score": "Validación",
+      "processing_date": "Fecha Procesamiento",
+      "notes": "Notas"
+    },
+    "validation": {
+      "include_failed_validations": true,
+      "mark_invalid_fields": true,
+      "invalid_field_suffix": " [REVISAR]"
+    }
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "file": "logs/pdf_ocr.log",
+    "max_bytes": 10485760,
+    "backup_count": 5
+  },
+  "processing": {
+    "batch_size": 5,
+    "parallel_processing": false,
+    "max_workers": 2,
+    "timeout_per_file": 300,
+    "retry_attempts": 2
+  }
+}

@@ -1,0 +1,45 @@
+# Spanish PDF Forms OCR - Requirements
+
+# Core PDF and Image Processing
+PyMuPDF
+pillow
+opencv-python
+pdf2image
+
+# OCR Engines
+paddlepaddle
+paddleocr
+easyocr
+torch
+torchvision
+
+# Text Processing and Language
+pyspellchecker
+unicodedata2
+
+# Data Processing and Export
+pandas
+numpy
+
+# Machine Learning for Predictions
+scikit-learn
+xgboost
+matplotlib
+ipywidgets
+
+# Configuration and Logging
+pyyaml
+colorlog
+
+# Development and Testing
+pytest
+pytest-cov
+black
+flake8
+
+# Optional: Progress bars and utilities
+tqdm
+click
+
+# System dependencies (install separately):
+# - poppler-utils (for pdf2image): https://poppler.freedesktop.org/
