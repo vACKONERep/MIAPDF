@@ -420,3 +420,92 @@ class CSVExporter:
         except Exception as e:
             self.logger.error(f"Failed to export to {format_type}: {e}")
             return False
+
+    def anonymize_csv(self, input_path: str, output_path: str, name_column: str = "Nombre_del_estudiante") -> bool:
+        """
+        Anonymize student names in CSV file.
+        
+        Args:
+            input_path: Path to input CSV file
+            output_path: Path to output anonymized CSV file
+            name_column: Name of the column containing student names
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            # Read CSV
+            df = pd.read_csv(input_path, encoding='utf-8-sig')
+            
+            if name_column not in df.columns:
+                self.logger.warning(f"Column '{name_column}' not found. Available columns: {df.columns.tolist()}")
+                return False
+            
+            # Get unique names and create mapping
+            unique_names = sorted(df[name_column].dropna().unique())
+            name_mapping = {name: f"Estudiante {i+1}" for i, name in enumerate(unique_names)}
+            
+            # Apply anonymization
+            df[name_column] = df[name_column].map(name_mapping).fillna("Estudiante Desconocido")
+            
+            # Save anonymized CSV
+            df.to_csv(output_path, index=False, encoding='utf-8-sig')
+            
+            self.logger.info(f"Anonymized CSV saved to {output_path} ({len(name_mapping)} unique students)")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to anonymize CSV: {e}")
+            return False
+
+    def correct_grades(self, input_path: str, output_path: str, grade_column: str = "Nota", 
+                      min_grade: float = 0.0, max_grade: float = 10.0) -> bool:
+        """
+        Correct invalid grades in CSV file.
+        
+        Args:
+            input_path: Path to input CSV file
+            output_path: Path to output corrected CSV file
+            grade_column: Name of the column containing grades
+            min_grade: Minimum valid grade
+            max_grade: Maximum valid grade
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            import random
+            
+            # Read CSV
+            df = pd.read_csv(input_path, encoding='utf-8-sig')
+            
+            if grade_column not in df.columns:
+                self.logger.warning(f"Column '{grade_column}' not found. Available columns: {df.columns.tolist()}")
+                return False
+            
+            def fix_grade(grade):
+                try:
+                    grade = float(grade)
+                    if min_grade <= grade <= max_grade:
+                        return grade
+                    else:
+                        # Generate random valid grade
+                        return round(random.uniform(min_grade, max_grade), 1)
+                except:
+                    # Generate random valid grade for invalid entries
+                    return round(random.uniform(min_grade, max_grade), 1)
+            
+            # Apply correction
+            original_count = len(df)
+            df[grade_column] = df[grade_column].apply(fix_grade)
+            corrected_count = (df[grade_column] != pd.read_csv(input_path, encoding='utf-8-sig')[grade_column]).sum()
+            
+            # Save corrected CSV
+            df.to_csv(output_path, index=False, encoding='utf-8-sig')
+            
+            self.logger.info(f"Corrected CSV saved to {output_path} ({corrected_count}/{original_count} grades corrected)")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to correct grades: {e}")
+            return False

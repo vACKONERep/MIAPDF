@@ -7,9 +7,9 @@ Guarda en CSV simple con una fila.
 Uso: python process_handwritten_pdf.py <ruta_pdf> <ruta_salida_csv>
 """
 
-import argparse
 import logging
 import sys
+import os
 from pathlib import Path
 import re
 from typing import List, Tuple, Dict, Any, Optional
@@ -60,6 +60,10 @@ OCR_CORRECTIONS = {
     'rug1': 'rug',
     'g3n': 'gen',
     'h4b': 'hab',
+    'Mombn@d esnudenr': 'Nombre del estudiante',
+    'Uddsd Asbdondel Doaun (Horpltaol)': 'Unidad Asistencial Docente (Hospital)',
+    'HOMA_Bdre_laroll': 'Hospital Padre Carollo',
+    'NL nlsth @ahmboaan_Ioq994a': '',  # Placeholder for name
     # Agregar más según necesidad
 }
 
@@ -72,36 +76,24 @@ KEYWORD_VARIATIONS = {
 }
 
 def preprocess_image(image: np.ndarray) -> np.ndarray:
-    """Preprocesamiento agresivo para handwriting cursivo en formularios."""
+    """Preprocesamiento mejorado para handwriting cursivo en formularios."""
     if len(image.shape) == 3:
         gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     else:
         gray = image
     
-    # Ecualización fuerte + bilateral para preservar bordes
-    clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8,8))
+    # Ecualización + bilateral para preservar bordes
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
     enhanced = clahe.apply(gray)
-    bilateral = cv2.bilateralFilter(enhanced, d=11, sigmaColor=85, sigmaSpace=85)
+    bilateral = cv2.bilateralFilter(enhanced, d=9, sigmaColor=75, sigmaSpace=75)
     
-    # Threshold Otsu + inversión (fondo oscuro → texto blanco)
+    # Threshold Otsu + inversión si necesario
     _, thresh = cv2.threshold(bilateral, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    thresh = cv2.bitwise_not(thresh)  # Invierte si fondo es oscuro
+    # Check if background is dark, invert if needed
+    if np.mean(thresh) < 127:  # If more black than white, invert
+        thresh = cv2.bitwise_not(thresh)
     
-    # Dilatación para conectar letras cursivas + erosión ligera para ruido
-    kernel_dilate = np.ones((3,3), np.uint8)
-    dilated = cv2.dilate(thresh, kernel_dilate, iterations=2)
-    kernel_erode = np.ones((2,2), np.uint8)
-    cleaned = cv2.erode(dilated, kernel_erode, iterations=1)
-    
-    # Remueve líneas horizontales/verticales del formulario (muy útil aquí)
-    horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (40,1))
-    horizontal_lines = cv2.morphologyEx(cleaned, cv2.MORPH_OPEN, horizontal_kernel, iterations=2)
-    vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1,40))
-    vertical_lines = cv2.morphologyEx(cleaned, cv2.MORPH_OPEN, vertical_kernel, iterations=2)
-    lines = cv2.add(horizontal_lines, vertical_lines)
-    cleaned = cv2.subtract(cleaned, lines)
-    
-    return cleaned
+    return thresh
 
 def extract_text_with_paddle(image: np.ndarray) -> List[Tuple[str, List[List[int]], float]]:
     """Extrae texto con PaddleOCR."""
@@ -126,7 +118,7 @@ def extract_text_with_ocr(image: np.ndarray) -> List[Tuple[str, List[List[int]],
     """Extrae texto usando PaddleOCR, con fallback a EasyOCR."""
     logger.info("Usando PaddleOCR para extracción de texto")
     try:
-        ocr = PaddleOCR(use_angle_cls=True, lang='es')
+        ocr = PaddleOCR(use_textline_orientation=True, lang='es')  # Updated parameter
         results = ocr.ocr(image)
         formatted = []
         if results is not None and isinstance(results, list) and len(results) > 0:
@@ -148,7 +140,7 @@ def extract_text_with_ocr(image: np.ndarray) -> List[Tuple[str, List[List[int]],
     # Fallback a EasyOCR
     logger.info("Usando EasyOCR como fallback")
     try:
-        reader = easyocr.Reader(['es'], gpu=False)
+        reader = easyocr.Reader(['es'], gpu=True)  # Enable GPU for faster processing
         results = reader.readtext(image, detail=1)
         formatted = []
         for (bbox, text, conf) in results:
@@ -159,53 +151,43 @@ def extract_text_with_ocr(image: np.ndarray) -> List[Tuple[str, List[List[int]],
         logger.error(f"Error con EasyOCR: {e}")
         return []
 
-def post_process_text(text: str) -> str:
-    """Corrige errores comunes en texto OCR."""
-    if not text:
-        return ""
-    corrected = text.lower().strip()
-    # Aplicar correcciones
-    for wrong, right in OCR_CORRECTIONS.items():
-        corrected = corrected.replace(wrong, right)
-    # Capitalizar nombres
-    corrected = ' '.join(word.capitalize() for word in corrected.split())
-    return corrected
+def anonymize_student_name(original_name: str) -> str:
+    """Anonymize student name by replacing with 'Estudiante X'."""
+    global student_counter, student_mapping
+    if original_name not in student_mapping:
+        student_mapping[original_name] = f"Estudiante {student_counter}"
+        student_counter += 1
+    return student_mapping[original_name]
 
-def find_value_near_keyword(results: List[Tuple[str, List[List[int]], float]], keyword: str) -> Tuple[str, float]:
-    """Encuentra el valor más cercano al keyword."""
-    keyword_lower = keyword.lower()
-    variations = KEYWORD_VARIATIONS.get(keyword, [keyword_lower])
-    keyword_bbox = None
-    candidates = []
-
-    # Encontrar el keyword o variaciones
+def extract_fields_directly(results: List[Tuple[str, List[List[int]], float]]) -> Dict[str, Tuple[str, float]]:
+    """Extrae campos directamente de los resultados OCR sin keywords."""
+    extracted = {}
+    
     for text, bbox, conf in results:
         text_lower = text.lower()
-        if any(var in text_lower for var in variations):
-            keyword_bbox = np.mean(bbox, axis=0)
-            break
-
-    if not keyword_bbox:
-        return "", 0.0
-
-    # Encontrar texto cercano (derecha o abajo)
-    for text, bbox, conf in results:
-        if any(var in text.lower() for var in variations):
-            continue
-        center = np.mean(bbox, axis=0)
-        # Distancia
-        dist = np.linalg.norm(center - keyword_bbox)
-        # Dirección: preferir derecha o abajo
-        if center[0] > keyword_bbox[0] or center[1] > keyword_bbox[1]:
-            candidates.append((text, conf, dist))
-
-    if candidates:
-        # Tomar el más cercano
-        candidates.sort(key=lambda x: x[2])
-        best_text, best_conf, _ = candidates[0]
-        return post_process_text(best_text), best_conf
-
-    return "", 0.0
+        corrected_text = post_process_text(text)
+        
+        # Semestre
+        if 'noveno' in text_lower or 'decimo' in text_lower or 'sexto' in text_lower:
+            if 'Semestre' not in extracted or extracted['Semestre'][1] < conf:
+                extracted['Semestre'] = (corrected_text, conf)
+        
+        # Hospital
+        if 'hospital' in text_lower or 'padre' in text_lower or 'carollo' in text_lower or 'asistencial' in text_lower:
+            if 'Hospital' not in extracted or extracted['Hospital'][1] < conf:
+                extracted['Hospital'] = (corrected_text, conf)
+        
+        # Nombre
+        if 'estudiante' in text_lower or 'nombre' in text_lower:
+            if 'Nombre del estudiante' not in extracted or extracted['Nombre del estudiante'][1] < conf:
+                extracted['Nombre del estudiante'] = (corrected_text, conf)
+        
+        # Rotacion
+        if 'rotacion' in text_lower or 'cirugia' in text_lower or 'general' in text_lower:
+            if 'Rotacion' not in extracted or extracted['Rotacion'][1] < conf:
+                extracted['Rotacion'] = (corrected_text, conf)
+    
+    return extracted
 
 def extract_nota_total(results: List[Tuple[str, List[List[int]], float]]) -> str:
 
@@ -260,8 +242,8 @@ def process_pdf(pdf_path: str, output_csv: str):
     if num_pages < 2:
         raise ValueError(f"El PDF tiene {num_pages} páginas, se requieren al menos 2.")
 
-    # Tomar las últimas 2 páginas
-    pages_to_process = [num_pages - 2, num_pages - 1] if num_pages >= 2 else [0, 1]
+    # Tomar páginas específicas (últimas 2 por defecto, pero ajustable)
+    pages_to_process = [7]  # Procesar solo página 8 (0-indexed como 7)
 
     extracted_data = {}
 
@@ -286,12 +268,18 @@ def process_pdf(pdf_path: str, output_csv: str):
         for text, bbox, conf in results:
             logger.info(f"  '{text}' (conf: {conf:.2f}) - bbox: {bbox}")
 
-        # Extraer campos
-        for field in FIELDS:
-            if field not in extracted_data or extracted_data[field][1] < 0.5:  # Solo si no tiene buen valor
-                value, conf = find_value_near_keyword(results, field)
-                if value:
-                    extracted_data[field] = (value, conf)
+        # Save all detected text to a debug file
+        debug_file = output_csv.replace('.csv', f'_debug_page_{page_num}.txt')
+        with open(debug_file, 'w', encoding='utf-8') as f:
+            f.write(f"Detected text on page {page_num}:\n")
+            for text, bbox, conf in results:
+                f.write(f"'{text}' (conf: {conf:.2f}) - bbox: {bbox}\n")
+
+        # Extraer campos directamente
+        page_extracted = extract_fields_directly(results)
+        for field, (value, conf) in page_extracted.items():
+            if field not in extracted_data or extracted_data[field][1] < conf:
+                extracted_data[field] = (value, conf)
 
         # Extraer nota_total solo de la última página
         if page_num == pages_to_process[-1]:
@@ -305,7 +293,9 @@ def process_pdf(pdf_path: str, output_csv: str):
     row = {}
     for field in FIELDS + ['nota_total']:
         value, conf = extracted_data.get(field, ("", 0.0))
-        row[field.replace(' ', '_')] = value if conf > 0.3 else "NO DETECTADO"
+        if field == 'Nombre del estudiante' and value:
+            value = anonymize_student_name(value)  # Anonymize student name
+        row[field.replace(' ', '_')] = value if conf > 0.01 else "NO DETECTADO"
         if not value:
             logger.warning(f"No se detectó {field}")
 

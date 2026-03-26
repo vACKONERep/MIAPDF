@@ -20,12 +20,15 @@ unicodedata2
 # Data Processing and Export
 pandas
 numpy
+seaborn
 
 # Machine Learning for Predictions
 scikit-learn
 xgboost
 matplotlib
 ipywidgets
+shap
+lime
 
 # Configuration and Logging
 pyyaml

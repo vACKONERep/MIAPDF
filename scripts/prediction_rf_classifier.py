@@ -2,6 +2,7 @@
 """
 Risk Prediction using Random Forest Classifier
 Interactive dashboard for predicting grade risk categories.
+Enhanced with student encoding and performance history.
 """
 
 import pandas as pd
@@ -10,16 +11,21 @@ from IPython.display import display, clear_output
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.feature_selection import SelectKBest, f_classif
+import numpy as np
 
 # Load CSV
-df = pd.read_csv('data/output/batch_extracted_data.csv', encoding='utf-8-sig')
-df['nota_total'] = pd.to_numeric(df['nota_total'], errors='coerce')
-df = df.dropna(subset=['nota_total'])
+df = pd.read_csv('data/output/unificado_final_anonimo.csv', encoding='utf-8-sig')
+df['Nota'] = pd.to_numeric(df['Nota'], errors='coerce')
+df = df.dropna(subset=['Nota'])
 
-# Rename
-df.rename(columns={'nota_total': 'Nota', 'Rotacion': 'Materia'}, inplace=True)
+# Map semesters to numbers for ordering
+semester_map = {
+    'QUINTO': 5, 'SEXTO': 6, 'SEPTIMO': 7, 'OCTAVO': 8, 'NOVENO': 9, 'DECIMO': 10
+}
+df['Semestre_num'] = df['Semestre'].map(semester_map)
 
 # Categorize risk
 def categorize_risk(nota):
@@ -32,23 +38,45 @@ def categorize_risk(nota):
 
 df['Riesgo'] = df['Nota'].apply(categorize_risk)
 
-# Encode
+# Encode categoricals
 le_materia = LabelEncoder()
 le_semestre = LabelEncoder()
+le_estudiante = LabelEncoder()
 df['Materia_cod'] = le_materia.fit_transform(df['Materia'])
 df['Semestre_cod'] = le_semestre.fit_transform(df['Semestre'])
+df['Estudiante_cod'] = le_estudiante.fit_transform(df['Nombre_del_estudiante'])
 
-# Train
-X = df[['Semestre_cod', 'Materia_cod']]
+# Add historical features
+def add_historical_features(df):
+    df = df.sort_values(['Nombre_del_estudiante', 'Semestre_num', 'Materia'])
+    df['Hist_avg_grade'] = df.groupby('Nombre_del_estudiante')['Nota'].transform(lambda x: x.expanding().mean().shift(1))
+    df['Hist_subject_count'] = df.groupby('Nombre_del_estudiante').cumcount()
+    df['Hist_avg_grade'] = df['Hist_avg_grade'].fillna(df['Nota'].mean())  # Impute with global mean for sparsity
+    df['Hist_subject_count'] = df['Hist_subject_count'].fillna(0)
+    return df
+
+df = add_historical_features(df)
+
+# Features
+X = df[['Semestre_cod', 'Materia_cod', 'Estudiante_cod', 'Hist_avg_grade', 'Hist_subject_count']]
 y = df['Riesgo']
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Feature selection to handle sparsity
+selector = SelectKBest(score_func=f_classif, k='all')
+X_selected = selector.fit_transform(X, y)
 
-model = RandomForestClassifier(n_estimators=100, random_state=42)
+# Train with cross-validation
+X_train, X_test, y_train, y_test = train_test_split(X_selected, y, test_size=0.2, random_state=42, stratify=y)
+
+model = RandomForestClassifier(n_estimators=200, random_state=42, max_depth=10)  # Increased estimators, limited depth for sparsity
+cv_scores = cross_val_score(model, X_train, y_train, cv=5)
+print(f"Cross-validation scores: {cv_scores.mean():.3f} (+/- {cv_scores.std() * 2:.3f})")
+
 model.fit(X_train, y_train)
-
+y_pred = model.predict(X_test)
 acc = accuracy_score(y_test, y_pred)
 print(f"Model accuracy: {acc * 100:.1f}%")
+print(classification_report(y_test, y_pred))
 
 # Widgets
 estudiante_dd = widgets.Dropdown(
@@ -98,14 +126,25 @@ def on_click(b):
         plt.show()
 
         # Prediction
+        sem_num = semester_map[sem]
+        est_cod = le_estudiante.transform([est])[0]
         sem_cod = le_semestre.transform([sem])[0]
         mat_cod = le_materia.transform([mat])[0]
 
-        pred = model.predict([[sem_cod, mat_cod]])[0]
-        prob = max(model.predict_proba([[sem_cod, mat_cod]])[0]) * 100
+        # Compute historical features
+        df_est_hist = df_est[df_est['Semestre_num'] < sem_num]
+        hist_avg = df_est_hist['Nota'].mean() if not df_est_hist.empty else df['Nota'].mean()
+        hist_count = len(df_est_hist)
 
-        print(f"\nRisk prediction in '{mat}': {pred}")
-        print(f"  (Probability of this category: {prob:.1f}% - Random Forest Classifier trained with all historical grades)")
+        # Features for prediction
+        features = np.array([[sem_cod, mat_cod, est_cod, hist_avg, hist_count]])
+        features_selected = selector.transform(features)
+
+        pred = model.predict(features_selected)[0]
+        prob = max(model.predict_proba(features_selected)[0]) * 100
+
+        print(f"\nRisk prediction in '{mat}' for semester {sem}: {pred}")
+        print(f"  (Probability of this category: {prob:.1f}% - Based on historical avg: {hist_avg:.2f}, subjects: {hist_count})")
 
         if pred == 'Baja':
             print("⚠️ ALERT: Low grade risk (<6)")

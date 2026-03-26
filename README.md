@@ -8,11 +8,15 @@ A comprehensive Python solution for processing handwritten Spanish PDF forms, ex
 - **Spanish Language Optimized**: Specialized for Spanish handwritten text recognition
 - **Advanced Image Preprocessing**: Noise reduction, contrast enhancement, deskewing, and binarization
 - **Intelligent Form Extraction**: Automated detection and extraction of names, numbers, and subjects
-- **Flexible CSV Export**: Multiple export formats with validation reporting
+- **Flexible CSV Export**: Multiple export formats with validation reporting and anonymization
+- **Excel Processing**: Convert Excel files with student grades to unified CSV format
+- **Data Anonymization**: Privacy-preserving student data processing
 - **High Accuracy**: Ensemble OCR approach for maximum accuracy
 - **Production Ready**: Comprehensive error handling, logging, and validation
 - **Batch Processing**: Process multiple PDFs at once with simple or advanced modes
 - **Grade Prediction**: Machine learning models (Random Forest, XGBoost) for predicting student grades and risk assessment
+- **Model Interpretability**: SHAP and LIME explanations for model predictions and ethical AI
+- **Capstone Documentation**: Complete academic documentation with automated appendix generation
 
 ## 📋 Requirements
 
@@ -55,6 +59,8 @@ A comprehensive Python solution for processing handwritten Spanish PDF forms, ex
    **Note**: For machine learning predictions, additional libraries are included:
    - scikit-learn, xgboost for ML models
    - matplotlib, ipywidgets for interactive dashboards
+   - shap, lime for model interpretability and ethical AI analysis
+   - seaborn for advanced data visualizations
 
    Nota: EasyOCR requiere PyTorch. Si hay problemas, instalar manualmente:
    ```bash
@@ -116,6 +122,30 @@ for i, image in enumerate(images):
 csv_exporter.export_multiple_forms(extracted_forms, "data/output/extracted_data.csv")
 ```
 
+### Excel Processing
+
+If you have student grade data in Excel files, you can convert them to the unified CSV format:
+
+```python
+from scripts.excel_processor import ExcelProcessor
+
+# Process Excel files
+processor = ExcelProcessor()
+unified_data = processor.process_all_files()
+
+if not unified_data.empty:
+    # Save unified CSV
+    processor.save_unified_csv(unified_data)
+    
+    # Save anonymized version
+    processor.anonymize_data(unified_data)
+```
+
+Or run the script directly:
+```bash
+python scripts/excel_processor.py
+```
+
 ### Quick Prediction Example
 
 ```python
@@ -138,6 +168,15 @@ python -m src.main --input data/input/ --output data/output/batch_extracted_data
 
 # Handwritten PDF processing
 python scripts/ejemplo_handwriting.py
+
+# Excel processing and anonymization
+python scripts/excel_processor.py
+
+# Generate appendix images for capstone document
+python scripts/generate_appendix_images.py
+
+# Model interpretability analysis (SHAP & LIME)
+python scripts/interpretability_analysis.py
 ```
 
 ## ✏️ Handwritten PDF Processing
@@ -202,46 +241,93 @@ Columnas:
 - Funciona localmente sin internet después de instalar dependencias.
 - Optimizado para español.
 
-## 🔄 Batch Processing for Multiple PDFs
+## 🔄 Excel Processing and Data Anonymization
 
-For processing multiple handwritten PDFs at once:
+The project now supports processing Excel files containing student grade data, with automatic conversion to the unified CSV format used by the ML models.
 
-```bash
-# Using the simple batch processor
-python -m src.main --input data/input/ --output data/output/batch_extracted_data.csv --batch-simple
+### Features:
+- **Automatic header detection** in Excel files
+- **Student name extraction** from various column formats
+- **Semester identification** from filenames
+- **Data unification** from multiple Excel files
+- **Privacy protection** with automatic anonymization
+- **Grade validation** and correction
 
-# Or run directly
-python src/batch_pdf_processor.py
+### Usage:
+```python
+from scripts.excel_processor import ExcelProcessor
+
+processor = ExcelProcessor()
+data = processor.process_all_files()
+processor.save_unified_csv(data)
+processor.anonymize_data(data)  # Creates anonymous version
 ```
 
-This will process all PDFs in `data/input/`, extract data from the last 2 pages of each PDF, and save to a single CSV file.
+### Anonymization Features:
+- Replaces real student names with "Estudiante X" format
+- Maintains data integrity for analysis
+- Essential for educational data privacy compliance
 
-## 📊 Grade Prediction and Risk Assessment
+## � Capstone Project Documentation
 
-The project includes machine learning models for predicting student grades and assessing performance risk based on historical data.
+### Documento Capstone Mejorado
 
-### Available Prediction Scripts:
-- `scripts/prediction_rf_regressor.py` - Random Forest regression for grade prediction
-- `scripts/prediction_xgb_regressor.py` - XGBoost regression for grade prediction  
-- `scripts/prediction_rf_classifier.py` - Random Forest classification for risk assessment
-- `scripts/prediction_xgb_classifier.py` - XGBoost classification for risk assessment
+El proyecto incluye un documento capstone completo en español (`documento_capstone_mejorado.md`) que documenta:
+
+- **Metodología completa** del desarrollo del sistema OCR
+- **Análisis ético** de la IA en educación
+- **Interpretabilidad de modelos** con SHAP y LIME
+- **Resultados experimentales** detallados
+- **Anexos con visualizaciones** generadas automáticamente
+
+### Generación de Anexos
+
+```bash
+# Generar todas las imágenes para anexos del capstone
+python scripts/generate_appendix_images.py
+```
+
+Esto crea 13 imágenes PNG en `appendix_images/` incluyendo:
+- Estadísticas del dataset
+- Distribuciones de calificaciones
+- Métricas de modelos ML
+- Matrices de confusión
+- Importancia de características
+- Gráficos SHAP y LIME
+- Comparaciones de rendimiento
+
+### Reporte de Interpretabilidad
+
+```bash
+# Generar análisis completo de interpretabilidad
+python scripts/interpretability_analysis.py
+```
+
+Produce explicaciones detalladas de por qué el modelo toma ciertas decisiones, crucial para aplicaciones educativas responsables.
+
+## 🤖 Model Interpretability and Ethical AI
+
+The project implements responsible AI practices with comprehensive model interpretability using SHAP (SHapley Additive exPlanations) and LIME (Local Interpretable Model-agnostic Explanations).
+
+### Features:
+- **Global explanations**: Feature importance across the entire dataset
+- **Local explanations**: Individual prediction interpretations
+- **Ethical considerations**: Bias detection and fairness analysis
+- **Educational compliance**: Transparent decision-making for student assessments
+
+### Generated Outputs:
+- SHAP summary plots showing feature impact
+- SHAP waterfall plots for individual predictions
+- LIME explanations for local interpretability
+- Ethical analysis reports in Spanish
 
 ### Usage:
 ```bash
-# Run in Jupyter notebook or Python environment with GUI support
-python scripts/prediction_rf_regressor.py
+# Generate complete interpretability analysis
+python scripts/interpretability_analysis.py
+
+# View results in interpretability_plots/ directory
 ```
-
-These scripts provide interactive dashboards for:
-- Selecting students and subjects
-- Viewing historical performance charts
-- Predicting future grades with confidence scores
-- Assessing performance risk categories (Low <6, Medium 6-8, High ≥8)
-
-### Requirements for Prediction:
-- Processed CSV data from batch processing
-- Interactive Python environment (Jupyter, VS Code with Python extension)
-- Libraries: scikit-learn, xgboost, matplotlib, ipywidgets
 
 ## 📁 Project Structure
 
@@ -259,17 +345,24 @@ PDFintoCSV/
 ├── config/
 │   └── ocr_config.json          # Configuration settings
 ├── data/
-│   ├── input/                   # Input PDF files
+│   ├── input/                   # Input PDF/Excel files
 │   └── output/                  # Generated CSV files and reports
-├── scripts/                    # Usage scripts
-│   ├── prediction_rf_regressor.py    # Random Forest grade prediction
-│   ├── prediction_xgb_regressor.py   # XGBoost grade prediction
-│   ├── prediction_rf_classifier.py   # Random Forest risk classification
-│   ├── prediction_xgb_classifier.py  # XGBoost risk classification
+├── scripts/                     # Analysis and utility scripts
+│   ├── excel_processor.py       # Excel to CSV conversion with anonymization
+│   ├── generate_appendix_images.py  # Generate PNG images for capstone appendices
+│   ├── interpretability_analysis.py # SHAP and LIME model explanations
+│   ├── prediction_rf_classifier.py  # Random Forest risk classification
+│   ├── prediction_rf_regressor.py   # Random Forest grade prediction
+│   ├── prediction_xgb_classifier.py # XGBoost risk classification
+│   ├── prediction_xgb_regressor.py  # XGBoost grade prediction
 │   ├── process_single_pdf.py    # Single PDF processing example
 │   ├── batch_process.py         # Advanced batch processing example
-│   └── ...
+│   └── ejemplo_handwriting.py   # Handwritten PDF processing example
+├── appendix_images/             # Generated PNG images for capstone (auto-created)
+├── interpretability_plots/      # SHAP and LIME plots (auto-created)
 ├── tests/                       # Unit tests
+├── documento_capstone_mejorado.md # Complete capstone document in Spanish
+├── interpretability_report.md   # Detailed interpretability analysis
 ├── requirements.txt             # Python dependencies
 └── README.md                    # This file
 ```
@@ -370,7 +463,17 @@ pytest tests/ --cov=src --cov-report=html
 4. Ensure all tests pass
 5. Submit a pull request
 
-## 📄 License
+## � Acknowledgments
+
+- Tesseract OCR for optical character recognition
+- Google Cloud Vision API for advanced OCR capabilities
+- Azure Computer Vision for cloud-based processing
+- scikit-learn and XGBoost for machine learning
+- SHAP and LIME for model interpretability
+- seaborn for statistical data visualization
+- pandas for data manipulation and analysis
+
+## �📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
