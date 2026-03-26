@@ -181,7 +181,7 @@ python scripts/interpretability_analysis.py
 
 ## ✏️ Handwritten PDF Processing
 
-Para procesar PDFs con handwriting en español, enfocado en páginas 8 y 9, extrayendo campos específicos:
+Para procesar PDFs con handwriting en español, enfocado en páginas, extrayendo campos específicos:
 
 ### Instalación de Dependencias
 
@@ -222,18 +222,18 @@ python process_handwritten_pdf.py ruta/al/archivo.pdf salida.csv
 ### Salida CSV
 
 Columnas:
-- `page_number`: Número de página (8 o 9)
+- `page_number`: Número de página
 - `field_name`: Nombre del campo
 - `extracted_text`: Texto extraído y corregido
 - `confidence`: Confianza del OCR (0-1)
-- `nota_total`: Número extraído de página 9 (solo presente en filas de página 9)
+- `nota_total`: Número extraído de nota total   
 
 ### Manejo de Variaciones
 
 - **Diferentes handwritings**: El script usa EasyOCR optimizado para handwriting y aplica correcciones básicas.
 - **Posiciones ligeramente distintas**: Busca texto cercano (derecha/abajo) al label usando bounding boxes.
 - **Errores comunes**: Corrige caracteres mal reconocidos (ej. 'a' por 'o').
-- **PDFs con menos páginas**: Error si menos de 9 páginas.
+- **PDFs con menos páginas**: Error si el formato del pdf es incosistente a la muestra.
 
 ### Limitaciones
 
