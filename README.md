@@ -1,6 +1,8 @@
-# Spanish PDF Forms OCR Project
-
-A comprehensive Python solution for processing handwritten Spanish PDF forms, extracting data to CSV format using advanced OCR techniques, and predicting student grades with machine learning models.
+# Prototipo - Automatización de notas estudiantiles
+**Proyecto de Titulación**  
+Maestría en Inteligencia Artificial Aplicada  
+Universidad de Las Américas
+---
 
 ## 🌟 Features
 
