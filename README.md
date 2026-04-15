@@ -1,150 +1,92 @@
-# Prototipo - Automatización de notas estudiantiles
+# Prototipo de Automatización de Notas Académicas
+
 **Proyecto de Titulación**  
 Maestría en Inteligencia Artificial Aplicada  
-Universidad de Las Américas
----
+Universidad de Las Américas  
 
 **Autores:** Oppíkofer López Jessica Marisol y Carrillo Barros Juan Carlos  
 
 ---
 
-## Descripción del problema y solución
+## Descripción del Problema y Solución
 
-El prototipo resuelve el problema del registro manual de notas en rúbricas PDF manuscritas del externado clínico de la Facultad de Medicina.  
+Este prototipo aborda el problema del registro manual de notas en rúbricas PDF manuscritas del externado clínico de la Facultad de Medicina. El proceso manual es lento, propenso a errores y consume tiempo valioso del personal académico.
 
-**Solución entregada:**  
-Un **prototipo modular** en Python que permite:
-- Convertir PDFs manuscritos a texto mediante OCR
-- Extraer campos relevantes (nota, semestre, materia)
-- Anonimizar datos sensibles
-- Predecir el nivel de riesgo académico (Alta / Media / Baja) con un modelo de Machine Learning interpretable
+**Solución implementada:**  
+Un prototipo modular en Python que automatiza:
+- La conversión de PDFs manuscritos a texto mediante OCR
+- La extracción de campos relevantes (nombre del estudiante, semestre, hospital, rotación, nota total)
+- La anonimización automática de datos sensibles para proteger la privacidad estudiantil
+- La predicción del nivel de riesgo académico (Baja/Media/Alta) utilizando modelos de Machine Learning interpretables
 
-El prototipo es completamente funcional para fines académicos y reproducible.
+El prototipo funciona con datos simulados para demostración y es completamente reproducible para fines académicos.
 
 ---
 
-## Requisitos técnicos y dependencias
+## Características Principales
 
-- Python 3.10 o superior
-- Sistema operativo: Windows, Linux o macOS
-- Dependencias listadas en `requirements.txt`
+### Procesamiento OCR
+- **Motores OCR**: PaddleOCR (principal), EasyOCR y Tesseract con soporte para español
+- **Optimización**: Especializado para handwriting en español médico
+- **Precisión**: Aproximadamente 62.5% en pruebas con handwriting real
+- **Campos extraídos**: Nombre estudiante, semestre, hospital, rotación, nota total
+
+### Anonimización de Datos
+- Reemplazo automático de nombres reales por "Estudiante 1", "Estudiante 2", etc.
+- Protección total de la privacidad estudiantil
+- Cumplimiento con regulaciones de datos educativos
+
+### Procesamiento de Excel
+- Unificación automática de archivos Excel con calificaciones estudiantiles
+- Detección inteligente de encabezados y formatos variables
+- Conversión a CSV unificado para análisis
+
+### Modelos de Machine Learning
+- **Algoritmo**: Random Forest Classifier para predicción de riesgo
+- **Variables**: Codificación de semestre, materia y estudiante
+- **Categorías de riesgo**:
+  - Baja: Nota < 6.0
+  - Media: 6.0 ≤ Nota < 8.0
+  - Alta: Nota ≥ 8.0
+- **Interpretabilidad**: Análisis SHAP y LIME para explicaciones del modelo
+
+### Salida de Datos
+- **Formato CSV**: Archivo,Nombre,Semestre,Materia,Nota,Fecha_Procesamiento
+- **Anonimización obligatoria**: Los nombres reales nunca aparecen en las salidas
+- **Un archivo por estudiante**: Cada PDF genera una fila en el CSV final
+
+---
+
+## Requisitos Técnicos
+
+- **Python**: 3.8 o superior
+- **Sistema Operativo**: Windows, Linux o macOS
+- **Dependencias**: Ver `requirements.txt`
 
 **Dependencias principales:**
-- OpenCV, pdf2image, EasyOCR, Tesseract (con paquete español)
-- pandas, scikit-learn, numpy
-- SHAP y LIME (interpretabilidad)
-- Joblib (guardado del modelo)
+- PyMuPDF, Pillow, OpenCV (procesamiento de PDFs e imágenes)
+- PaddleOCR, EasyOCR, PyTesseract (motores OCR)
+- Pandas, NumPy (procesamiento de datos)
+- Scikit-learn, XGBoost (Machine Learning)
+- SHAP, LIME (interpretabilidad)
+- Matplotlib, Seaborn (visualizaciones)
 
 ---
 
-## 🚀 Quick Start
+## Instalación
 
-### Basic Usage
-
-```python
-from src import PDFProcessor, ImagePreprocessor, OCREngine, FormExtractor, CSVExporter
-
-# Initialize components
-pdf_processor = PDFProcessor(dpi=300)
-preprocessor = ImagePreprocessor()
-ocr_engine = OCREngine()
-form_extractor = FormExtractor()
-csv_exporter = CSVExporter()
-
-# Process a single PDF
-pdf_path = "data/input/form.pdf"
-
-# Convert PDF to images
-images = pdf_processor.convert_pdf_to_images(pdf_path)
-
-# Process each page
-extracted_forms = []
-for i, image in enumerate(images):
-    # Preprocess image
-    processed_image = preprocessor.preprocess_image(image)
-    
-    # Extract text with OCR
-    ocr_result = ocr_engine.process_image(processed_image, engine="auto")
-    
-    # Extract form fields
-    extracted_form = form_extractor.extract_fields(ocr_result)
-    
-    extracted_forms.append((extracted_form, f"form_page_{i+1}.pdf"))
-
-# Export to CSV
-csv_exporter.export_multiple_forms(extracted_forms, "data/output/extracted_data.csv")
-```
-
-### Excel Processing
-
-If you have student grade data in Excel files, you can convert them to the unified CSV format:
-
-```python
-from scripts.excel_processor import ExcelProcessor
-
-# Process Excel files
-processor = ExcelProcessor()
-unified_data = processor.process_all_files()
-
-if not unified_data.empty:
-    # Save unified CSV
-    processor.save_unified_csv(unified_data)
-    
-    # Save anonymized version
-    processor.anonymize_data(unified_data)
-```
-
-Or run the script directly:
-```bash
-python scripts/excel_processor.py
-```
-
-### Quick Prediction Example
-
-```python
-# After processing PDFs to CSV, run predictions
-# Run in Jupyter or interactive environment
-python scripts/prediction_rf_regressor.py
-```
-
-### Command Line Usage (see scripts/)
-
-```bash
-# Single PDF processing
-python scripts/process_single_pdf.py --input data/input/form.pdf --output data/output/results.csv
-
-# Advanced batch processing
-python scripts/batch_process.py --input_dir data/input/ --output_dir data/output/
-
-# Simple batch processing for handwritten PDFs (NEW)
-python -m src.main --input data/input/ --output data/output/batch_extracted_data.csv --batch-simple
-
-# Handwritten PDF processing
-python scripts/ejemplo_handwriting.py
-
-# Excel processing and anonymization
-python scripts/excel_processor.py
-
-# Generate appendix images for capstone document
-python scripts/generate_appendix_images.py
-
-# Model interpretability analysis (SHAP & LIME)
-python scripts/interpretability_analysis.py
-```
-
-## ✏️ Handwritten PDF Processing
-
-Para procesar PDFs con handwriting en español, enfocado en páginas, extrayendo campos específicos:
-
-### Instalación de Dependencias
-
+### 1. Clonar el Repositorio
 ```bash
 git clone https://github.com/vACKONERep/MIAPDF.git
 cd MIAPDF
+```
+
+### 2. Instalar Dependencias de Python
+```bash
 pip install -r requirements.txt
 ```
 
-### Instalación de Dependencias del Sistema
+### 3. Instalar Dependencias del Sistema
 
 **Windows:**
 - Instalar Tesseract OCR desde: https://github.com/UB-Mannheim/tesseract/wiki
@@ -162,101 +104,49 @@ sudo apt-get install tesseract-ocr tesseract-ocr-spa poppler-utils
 brew install tesseract tesseract-lang poppler
 ```
 
+**Nota**: PaddleOCR requiere PyTorch. Si hay problemas:
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+```
+
 ---
 
 ## Uso del Prototipo
 
-### Procesamiento de PDFs
-
+### Procesamiento Básico de PDFs
 ```bash
-# Procesar un PDF individual
-python process_handwritten_pdf.py ruta/al/archivo.pdf salida.csv
-
-# Procesamiento por lotes (demo)
+# Procesar todos los PDFs en data/input/ 
 python simple_workflow.py
 ```
 
-### Campos Extraídos
-
-- **Nombre del estudiante**: Texto manuscrito cercano al label
-- **Semestre**: Texto manuscrito cercano
-- **Hospital**: Texto manuscrito cercano
-- **Rotacion**: Texto manuscrito cercano
-- **Nota Total**: Número manuscrito en página 9 (cerca de "Nota Total")
-
-### Salida CSV
-
-Columnas:
-- `page_number`: Número de página
-- `field_name`: Nombre del campo
-- `extracted_text`: Texto extraído y corregido
-- `confidence`: Confianza del OCR (0-1)
-- `nota_total`: Número extraído de nota total   
-
-### Manejo de Variaciones
-
-- **Diferentes handwritings**: El script usa EasyOCR optimizado para handwriting y aplica correcciones básicas.
-- **Posiciones ligeramente distintas**: Busca texto cercano (derecha/abajo) al label usando bounding boxes.
-- **Errores comunes**: Corrige caracteres mal reconocidos (ej. 'a' por 'o').
-- **PDFs con menos páginas**: Error si el formato del pdf es incosistente a la muestra.
-
-### Limitaciones
-
-- Asume labels impresos y handwriting adyacente.
-- Funciona localmente sin internet después de instalar dependencias.
-- Optimizado para español.
-
-## 🔄 Excel Processing and Data Anonymization
-
-The project now supports processing Excel files containing student grade data, with automatic conversion to the unified CSV format used by the ML models.
-
-### Features:
-- **Automatic header detection** in Excel files
-- **Student name extraction** from various column formats
-- **Semester identification** from filenames
-- **Data unification** from multiple Excel files
-- **Privacy protection** with automatic anonymization
-- **Grade validation** and correction
-
-### Usage:
-```python
-from scripts.excel_processor import ExcelProcessor
-
-processor = ExcelProcessor()
-data = processor.process_all_files()
-processor.save_unified_csv(data)
-processor.anonymize_data(data)  # Creates anonymous version
+### Procesamiento Individual de PDF
+```bash
+# Extraer campos de un PDF específico
+python process_handwritten_pdf.py ruta/al/archivo.pdf salida.csv
 ```
 
-### Anonymization Features:
-- Replaces real student names with "Estudiante X" format
-- Maintains data integrity for analysis
-- Essential for educational data privacy compliance
-
-## � Capstone Project Documentation
-
-### Documento Capstone Mejorado
-
-El proyecto incluye un documento capstone completo en español (`documento_capstone_mejorado.md`) que documenta:
-
-- **Metodología completa** del desarrollo del sistema OCR
-- **Análisis ético** de la IA en educación
-- **Interpretabilidad de modelos** con SHAP y LIME
-- **Resultados experimentales** detallados
-- **Anexos con visualizaciones** generadas automáticamente
-
-### Generación de Anexos
-
+### Procesamiento de Excel
 ```bash
-# Ejecutar modelo de predicción
+# Unificar archivos Excel y anonimizar
+python scripts/excel_processor.py
+```
+
+### Predicción de Riesgo Académico
+```bash
+# Ejecutar modelo de predicción interactivo
 python scripts/prediction_rf_classifier.py
 ```
 
 ### Análisis de Interpretabilidad
-
 ```bash
 # Generar explicaciones SHAP y LIME
 python scripts/interpretability_analysis.py
+```
+
+### Generación de Imágenes para Documentación
+```bash
+# Crear visualizaciones para el informe de titulación
+python scripts/generate_appendix_images.py
 ```
 
 ---
@@ -266,217 +156,82 @@ python scripts/interpretability_analysis.py
 ```
 MIAPDF/
 ├── src/                          # Código fuente modular
+│   ├── __init__.py              # Inicialización del paquete
+│   ├── main.py                  # Orquestador principal
 │   ├── pdf_processor.py         # Conversión PDF a imágenes
 │   ├── image_preprocessor.py    # Preprocesamiento de imágenes
-│   ├── ocr_engine.py            # Motores OCR (EasyOCR + Tesseract)
+│   ├── ocr_engine.py            # Motores OCR
 │   ├── form_extractor.py        # Extracción de campos
-│   └── csv_exporter.py          # Exportación a CSV
+│   ├── csv_exporter.py          # Exportación a CSV
+│   └── batch_pdf_processor.py   # Procesamiento por lotes
 ├── scripts/                     # Scripts de análisis
 │   ├── prediction_rf_classifier.py  # Modelo de predicción de riesgo
+│   ├── prediction_rf_regressor.py   # Regresor de calificaciones
+│   ├── prediction_xgb_classifier.py # XGBoost clasificador
+│   ├── prediction_xgb_regressor.py  # XGBoost regresor
 │   ├── interpretability_analysis.py # Análisis SHAP/LIME
-│   └── excel_processor.py       # Procesamiento de Excel
+│   ├── excel_processor.py       # Procesamiento de Excel
+│   ├── generate_appendix_images.py # Generación de imágenes
+│   └── process_single_pdf.py    # Procesamiento individual
 ├── data/
 │   ├── input/                   # PDFs de entrada
 │   └── output/                  # CSVs generados
-├── interpretability_plots/      # Gráficos SHAP/LIME generados
-├── appendix_images/             # Imágenes para documentación
 ├── config/
 │   └── ocr_config.json          # Configuración OCR
+├── interpretability_plots/      # Gráficos SHAP/LIME
+├── models/                      # Modelos entrenados (vacío)
+├── MiAModelo.ipynb              # Notebook de procesamiento Excel
+├── simple_workflow.py           # Script principal de demo
+├── process_handwritten_pdf.py   # Script de extracción OCR
 ├── requirements.txt             # Dependencias Python
+├── interpretability_report.md   # Reporte de interpretabilidad
 └── README.md                    # Este archivo
 ```
 
 ---
 
-## Características Técnicas
+## Detalles Técnicos
 
-### OCR y Procesamiento
-- **Motores OCR**: EasyOCR (optimizado para handwriting) + Tesseract (con soporte español)
-- **Preprocesamiento**: OpenCV para mejora de imágenes (contraste, ruido, binarización)
-- **Precisión**: ~62.5% en handwriting español (reportado en pruebas)
-- **Campos extraídos**: Nombre estudiante, semestre, materia, nota total
+### Flujo de Procesamiento
+1. **Conversión PDF**: PyMuPDF convierte PDFs a imágenes de alta resolución
+2. **Preprocesamiento**: OpenCV mejora contraste, reduce ruido y binariza
+3. **OCR**: PaddleOCR procesa imágenes para extraer texto en español
+4. **Extracción**: Algoritmos buscan campos específicos en el texto OCR
+5. **Anonimización**: Nombres reales se reemplazan por identificadores genéricos
+6. **Exportación**: Datos estructurados se guardan en CSV
 
-### Anonimización de Datos
-- Reemplazo automático de nombres reales por "Estudiante 1", "Estudiante 2", etc.
-- Protección de privacidad estudiantil
-- Cumplimiento con regulaciones de datos educativos
+### Datos de Entrada
+- **PDFs manuscritos**: Rúbricas del externado clínico con campos específicos
+- **Archivos Excel**: Calificaciones estudiantiles en formatos variables
+- **Campos requeridos**: Nombre estudiante, semestre, materia, nota
 
-### Modelos de Machine Learning
-- **Algoritmo**: Random Forest Classifier
-- **Predicción**: Nivel de riesgo académico (Alta/Media/Baja)
-- **Interpretabilidad**: SHAP y LIME para explicaciones
-- **Métricas**: Accuracy, precision, recall reportadas
+### Datos de Salida
+- **CSV unificado**: `unificado_final_anonimo.csv` con todas las calificaciones
+- **Formato**: Nombre_del_estudiante,Semestre,Materia,Nota
+- **Anonimización**: Nombres como "Estudiante 1", "Estudiante 2", etc.
 
----
-
-## Limitaciones y Consideraciones
-
-- **Precisión OCR**: Optimizado para handwriting español, pero no perfecto
-- **Dependencias**: Requiere instalación manual de Tesseract y Poppler
-- **Alcance**: Prototipo académico, no optimizado para producción a gran escala
-- **Datos**: Funciona con el formato específico de rúbricas de la Facultad de Medicina
+### Modelo de Machine Learning
+- **Entrenamiento**: Basado en datos históricos anonimizados
+- **Características**: Semestre codificado, materia codificada, estudiante codificado
+- **Métricas**: Accuracy, precision, recall reportadas en pruebas
+- **Interpretabilidad**: SHAP para importancia global, LIME para explicaciones locales
 
 ---
 
-## Documentación Académica
+## Limitaciones
 
-- `documento_capstone_mejorado.md`: Documento completo de titulación
-- `interpretability_report.md`: Análisis detallado de interpretabilidad
-- Scripts para generar anexos y visualizaciones automáticamente
+- **Precisión OCR**: ~62.5% en handwriting español médico
+- **Dependencias complejas**: Requiere instalación manual de Tesseract y Poppler
+- **Datos simulados**: El prototipo usa datos de demostración, no procesamiento OCR real completo
+- **Alcance académico**: Diseñado como prototipo de titulación, no para producción industrial
+- **Idioma**: Optimizado exclusivamente para español médico
+- **Formato específico**: Funciona con el formato exacto de rúbricas de la Facultad de Medicina
 
----
 
 ## Licencia
 
-Este proyecto es parte de un trabajo académico y se distribuye bajo licencia MIT para fines educativos.
+Este proyecto es parte de un trabajo académico de titulación y se distribuye bajo licencia MIT para fines educativos.
 
 ---
 
 **Desarrollado para la Maestría en Inteligencia Artificial Aplicada - Universidad de Las Américas**
-
----
-
-# Prototype - Intelligent Academic Grade Automation
-
-**Capstone Project**  
-Master's in Applied Artificial Intelligence  
-Universidad de Las Américas  
-
-**Authors:** Jessica Marisol Oppíkofer López and Juan Carlos Carrillo Barros  
-
----
-
-## Problem Description and Solution
-
-The prototype solves the problem of manual grade recording in handwritten PDF rubrics from the clinical externship of the Faculty of Medicine.  
-
-**Delivered Solution:**  
-A **modular prototype** in Python that allows:
-- Convert handwritten PDFs to text using OCR
-- Extract relevant fields (grade, semester, subject)
-- Anonymize sensitive data
-- Predict academic risk level (High / Medium / Low) with an interpretable Machine Learning model
-
-The prototype is fully functional for academic purposes and reproducible.
-
----
-
-## Technical Requirements and Dependencies
-
-- Python 3.10 or higher
-- Operating System: Windows, Linux or macOS
-- Dependencies listed in `requirements.txt`
-
-**Main Dependencies:**
-- OpenCV, pdf2image, EasyOCR, Tesseract (with Spanish package)
-- pandas, scikit-learn, numpy
-- SHAP and LIME (interpretability)
-- Joblib (model saving)
-
----
-
-## Installation
-
-```bash
-git clone https://github.com/vACKONERep/MIAPDF.git
-cd MIAPDF
-pip install -r requirements.txt
-```
-
-### System Dependencies Installation
-
-**Windows:**
-- Install Tesseract OCR from: https://github.com/UB-Mannheim/tesseract/wiki
-- Install Poppler from: https://github.com/oschwartz10612/poppler-windows/releases/
-- Add both to the system PATH
-
-**Ubuntu/Debian:**
-```bash
-sudo apt-get update
-sudo apt-get install tesseract-ocr tesseract-ocr-spa poppler-utils
-```
-
-**macOS:**
-```bash
-brew install tesseract tesseract-lang poppler
-```
-
----
-
-## Prototype Usage
-
-### PDF Processing
-
-```bash
-# Process a single PDF
-python process_handwritten_pdf.py path/to/file.pdf output.csv
-
-# Batch processing (demo)
-python simple_workflow.py
-```
-
-### Academic Risk Prediction
-
-```bash
-# Run prediction model
-python scripts/prediction_rf_classifier.py
-```
-
-### Interpretability Analysis
-
-```bash
-# Generate SHAP and LIME explanations
-python scripts/interpretability_analysis.py
-```
-
----
-
-## Project Structure
-
-```
-MIAPDF/
-├── src/                          # Modular source code
-│   ├── pdf_processor.py         # PDF to image conversion
-│   ├── image_preprocessor.py    # Image preprocessing
-│   ├── ocr_engine.py            # OCR engines (EasyOCR + Tesseract)
-│   ├── form_extractor.py        # Field extraction
-│   └── csv_exporter.py          # CSV export
-├── scripts/                     # Analysis scripts
-│   ├── prediction_rf_classifier.py  # Risk prediction model
-│   ├── interpretability_analysis.py # SHAP/LIME analysis
-│   └── excel_processor.py       # Excel processing
-├── data/
-│   ├── input/                   # Input PDFs
-│   └── output/                  # Generated CSVs
-├── interpretability_plots/      # Generated SHAP/LIME plots
-├── appendix_images/             # Images for documentation
-├── config/
-│   └── ocr_config.json          # OCR configuration
-├── requirements.txt             # Python dependencies
-└── README.md                    # This file
-```
-
----
-
-## Technical Features
-
-### OCR and Processing
-- **OCR Engines**: EasyOCR (optimized for handwriting) + Tesseract (with Spanish support)
-- **Preprocessing**: OpenCV for image enhancement (contrast, noise, binarization)
-- **Accuracy**: ~62.5% on Spanish handwriting (reported in tests)
-- **Extracted Fields**: Student name, semester, subject, total grade
-
-### Data Anonymization
-- Automatic replacement of real names with "Student 1", "Student 2", etc.
-- Student privacy protection
-- Compliance with educational data regulations
-
-### Machine Learning Models
-- **Algorithm**: Random Forest Classifier
-- **Prediction**: Academic risk level (High/Medium/Low)
-- **Interpretability**: SHAP and LIME for explanations
-- **Metrics**: Accuracy, precision, recall reported
-
----
-
-**Made with ❤️ for Spanish form processing**
