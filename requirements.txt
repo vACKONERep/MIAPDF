@@ -7,6 +7,7 @@ opencv-python
 pdf2image
 
 # OCR Engines
+pytesseract
 paddlepaddle
 paddleocr
 easyocr
@@ -28,6 +29,20 @@ xgboost
 matplotlib
 ipywidgets
 shap
+lime
+
+# Development and Testing
+pytest
+pytest-cov
+black
+flake8
+
+# Optional: Progress bars and utilities
+tqdm
+click
+
+# System dependencies (install separately):
+# - poppler-utils (for pdf2image)
 lime
 
 # Configuration and Logging

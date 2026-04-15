@@ -129,3 +129,5 @@ ocr_cache/
 test_output/
 test_results/
 pytest_cache/
+
+simple_workflow.py
