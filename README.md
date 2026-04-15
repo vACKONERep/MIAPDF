@@ -1,8 +1,16 @@
+<<<<<<< HEAD
 # Prototipo - Automatización Inteligente de Notas Académicas
 
 **Proyecto de Titulación**  
 Maestría en Inteligencia Artificial Aplicada  
 Universidad de Las Américas  
+=======
+# Prototipo - Automatización de notas estudiantiles
+**Proyecto de Titulación**  
+Maestría en Inteligencia Artificial Aplicada  
+Universidad de Las Américas
+---
+>>>>>>> f8810b8349b7134af77c80c6e59abbc120cb3b0a
 
 **Autores:** Oppíkofer López Jessica Marisol y Carrillo Barros Juan Carlos  
 
@@ -37,7 +45,110 @@ El prototipo es completamente funcional para fines académicos y reproducible.
 
 ---
 
+<<<<<<< HEAD
 ## Instalación
+=======
+## 🚀 Quick Start
+
+### Basic Usage
+
+```python
+from src import PDFProcessor, ImagePreprocessor, OCREngine, FormExtractor, CSVExporter
+
+# Initialize components
+pdf_processor = PDFProcessor(dpi=300)
+preprocessor = ImagePreprocessor()
+ocr_engine = OCREngine()
+form_extractor = FormExtractor()
+csv_exporter = CSVExporter()
+
+# Process a single PDF
+pdf_path = "data/input/form.pdf"
+
+# Convert PDF to images
+images = pdf_processor.convert_pdf_to_images(pdf_path)
+
+# Process each page
+extracted_forms = []
+for i, image in enumerate(images):
+    # Preprocess image
+    processed_image = preprocessor.preprocess_image(image)
+    
+    # Extract text with OCR
+    ocr_result = ocr_engine.process_image(processed_image, engine="auto")
+    
+    # Extract form fields
+    extracted_form = form_extractor.extract_fields(ocr_result)
+    
+    extracted_forms.append((extracted_form, f"form_page_{i+1}.pdf"))
+
+# Export to CSV
+csv_exporter.export_multiple_forms(extracted_forms, "data/output/extracted_data.csv")
+```
+
+### Excel Processing
+
+If you have student grade data in Excel files, you can convert them to the unified CSV format:
+
+```python
+from scripts.excel_processor import ExcelProcessor
+
+# Process Excel files
+processor = ExcelProcessor()
+unified_data = processor.process_all_files()
+
+if not unified_data.empty:
+    # Save unified CSV
+    processor.save_unified_csv(unified_data)
+    
+    # Save anonymized version
+    processor.anonymize_data(unified_data)
+```
+
+Or run the script directly:
+```bash
+python scripts/excel_processor.py
+```
+
+### Quick Prediction Example
+
+```python
+# After processing PDFs to CSV, run predictions
+# Run in Jupyter or interactive environment
+python scripts/prediction_rf_regressor.py
+```
+
+### Command Line Usage (see scripts/)
+
+```bash
+# Single PDF processing
+python scripts/process_single_pdf.py --input data/input/form.pdf --output data/output/results.csv
+
+# Advanced batch processing
+python scripts/batch_process.py --input_dir data/input/ --output_dir data/output/
+
+# Simple batch processing for handwritten PDFs (NEW)
+python -m src.main --input data/input/ --output data/output/batch_extracted_data.csv --batch-simple
+
+# Handwritten PDF processing
+python scripts/ejemplo_handwriting.py
+
+# Excel processing and anonymization
+python scripts/excel_processor.py
+
+# Generate appendix images for capstone document
+python scripts/generate_appendix_images.py
+
+# Model interpretability analysis (SHAP & LIME)
+python scripts/interpretability_analysis.py
+```
+
+## ✏️ Handwritten PDF Processing
+
+Para procesar PDFs con handwriting en español, enfocado en páginas, extrayendo campos específicos:
+
+### Instalación de Dependencias
+>>>>>>> f8810b8349b7134af77c80c6e59abbc120cb3b0a
 
 ```bash
 git clone https://github.com/vACKONERep/MIAPDF.git
@@ -77,7 +188,80 @@ python process_handwritten_pdf.py ruta/al/archivo.pdf salida.csv
 python simple_workflow.py
 ```
 
+<<<<<<< HEAD
 ### Predicción de Riesgo Académico
+=======
+### Campos Extraídos
+
+- **Nombre del estudiante**: Texto manuscrito cercano al label
+- **Semestre**: Texto manuscrito cercano
+- **Hospital**: Texto manuscrito cercano
+- **Rotacion**: Texto manuscrito cercano
+- **Nota Total**: Número manuscrito en página 9 (cerca de "Nota Total")
+
+### Salida CSV
+
+Columnas:
+- `page_number`: Número de página
+- `field_name`: Nombre del campo
+- `extracted_text`: Texto extraído y corregido
+- `confidence`: Confianza del OCR (0-1)
+- `nota_total`: Número extraído de nota total   
+
+### Manejo de Variaciones
+
+- **Diferentes handwritings**: El script usa EasyOCR optimizado para handwriting y aplica correcciones básicas.
+- **Posiciones ligeramente distintas**: Busca texto cercano (derecha/abajo) al label usando bounding boxes.
+- **Errores comunes**: Corrige caracteres mal reconocidos (ej. 'a' por 'o').
+- **PDFs con menos páginas**: Error si el formato del pdf es incosistente a la muestra.
+
+### Limitaciones
+
+- Asume labels impresos y handwriting adyacente.
+- Funciona localmente sin internet después de instalar dependencias.
+- Optimizado para español.
+
+## 🔄 Excel Processing and Data Anonymization
+
+The project now supports processing Excel files containing student grade data, with automatic conversion to the unified CSV format used by the ML models.
+
+### Features:
+- **Automatic header detection** in Excel files
+- **Student name extraction** from various column formats
+- **Semester identification** from filenames
+- **Data unification** from multiple Excel files
+- **Privacy protection** with automatic anonymization
+- **Grade validation** and correction
+
+### Usage:
+```python
+from scripts.excel_processor import ExcelProcessor
+
+processor = ExcelProcessor()
+data = processor.process_all_files()
+processor.save_unified_csv(data)
+processor.anonymize_data(data)  # Creates anonymous version
+```
+
+### Anonymization Features:
+- Replaces real student names with "Estudiante X" format
+- Maintains data integrity for analysis
+- Essential for educational data privacy compliance
+
+## � Capstone Project Documentation
+
+### Documento Capstone Mejorado
+
+El proyecto incluye un documento capstone completo en español (`documento_capstone_mejorado.md`) que documenta:
+
+- **Metodología completa** del desarrollo del sistema OCR
+- **Análisis ético** de la IA en educación
+- **Interpretabilidad de modelos** con SHAP y LIME
+- **Resultados experimentales** detallados
+- **Anexos con visualizaciones** generadas automáticamente
+
+### Generación de Anexos
+>>>>>>> f8810b8349b7134af77c80c6e59abbc120cb3b0a
 
 ```bash
 # Ejecutar modelo de predicción
@@ -311,6 +495,7 @@ MIAPDF/
 
 ---
 
+<<<<<<< HEAD
 ## Limitations and Considerations
 
 - **OCR Accuracy**: Optimized for Spanish handwriting, but not perfect
@@ -335,3 +520,6 @@ This project is part of an academic work and is distributed under the MIT Licens
 ---
 
 **Developed for the Master's in Applied Artificial Intelligence - Universidad de Las Américas**
+=======
+**Made with ❤️ for Spanish form processing**
+>>>>>>> f8810b8349b7134af77c80c6e59abbc120cb3b0a
