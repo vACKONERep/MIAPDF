@@ -1,16 +1,8 @@
-<<<<<<< HEAD
-# Prototipo - Automatización Inteligente de Notas Académicas
-
-**Proyecto de Titulación**  
-Maestría en Inteligencia Artificial Aplicada  
-Universidad de Las Américas  
-=======
 # Prototipo - Automatización de notas estudiantiles
 **Proyecto de Titulación**  
 Maestría en Inteligencia Artificial Aplicada  
 Universidad de Las Américas
 ---
->>>>>>> f8810b8349b7134af77c80c6e59abbc120cb3b0a
 
 **Autores:** Oppíkofer López Jessica Marisol y Carrillo Barros Juan Carlos  
 
@@ -45,9 +37,6 @@ El prototipo es completamente funcional para fines académicos y reproducible.
 
 ---
 
-<<<<<<< HEAD
-## Instalación
-=======
 ## 🚀 Quick Start
 
 ### Basic Usage
@@ -148,7 +137,6 @@ python scripts/interpretability_analysis.py
 Para procesar PDFs con handwriting en español, enfocado en páginas, extrayendo campos específicos:
 
 ### Instalación de Dependencias
->>>>>>> f8810b8349b7134af77c80c6e59abbc120cb3b0a
 
 ```bash
 git clone https://github.com/vACKONERep/MIAPDF.git
@@ -188,9 +176,6 @@ python process_handwritten_pdf.py ruta/al/archivo.pdf salida.csv
 python simple_workflow.py
 ```
 
-<<<<<<< HEAD
-### Predicción de Riesgo Académico
-=======
 ### Campos Extraídos
 
 - **Nombre del estudiante**: Texto manuscrito cercano al label
@@ -261,7 +246,6 @@ El proyecto incluye un documento capstone completo en español (`documento_capst
 - **Anexos con visualizaciones** generadas automáticamente
 
 ### Generación de Anexos
->>>>>>> f8810b8349b7134af77c80c6e59abbc120cb3b0a
 
 ```bash
 # Ejecutar modelo de predicción
@@ -495,31 +479,4 @@ MIAPDF/
 
 ---
 
-<<<<<<< HEAD
-## Limitations and Considerations
-
-- **OCR Accuracy**: Optimized for Spanish handwriting, but not perfect
-- **Dependencies**: Requires manual installation of Tesseract and Poppler
-- **Scope**: Academic prototype, not optimized for large-scale production
-- **Data**: Works with the specific format of Faculty of Medicine rubrics
-
----
-
-## Academic Documentation
-
-- `documento_capstone_mejorado.md`: Complete capstone document
-- `interpretability_report.md`: Detailed interpretability analysis
-- Scripts to automatically generate appendices and visualizations
-
----
-
-## License
-
-This project is part of an academic work and is distributed under the MIT License for educational purposes.
-
----
-
-**Developed for the Master's in Applied Artificial Intelligence - Universidad de Las Américas**
-=======
 **Made with ❤️ for Spanish form processing**
->>>>>>> f8810b8349b7134af77c80c6e59abbc120cb3b0a
